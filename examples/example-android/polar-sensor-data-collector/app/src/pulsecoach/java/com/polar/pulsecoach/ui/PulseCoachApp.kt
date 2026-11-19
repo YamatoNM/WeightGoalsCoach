@@ -25,7 +25,14 @@ import androidx.compose.material.icons.outlined.MonitorWeight
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.polar.pulsecoach.ui.auth.LoginScreen
+import com.polar.pulsecoach.ui.auth.RegisterScreen
+import com.polar.pulsecoach.ui.auth.RootViewModel
+import com.polar.pulsecoach.ui.profile.ProfileScreen
+import com.polar.pulsecoach.ui.settings.SettingsScreen
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -57,27 +64,67 @@ enum class PulseTab(val route: String, val label: String, val icon: ImageVector)
     Goals("goals", "Goals", Icons.Outlined.TrackChanges)
 }
 
+private object Routes {
+    const val LOGIN = "login"
+    const val REGISTER = "register"
+    const val SETTINGS = "settings"
+    const val EDIT_PROFILE = "settings/profile"
+}
+
+/** Picks the flow from the session: signed out → auth, new account → profile setup, else the tabs. */
 @Composable
-fun PulseCoachApp() {
+fun PulseCoachApp(rootViewModel: RootViewModel = hiltViewModel()) {
+    val session by rootViewModel.session.collectAsState()
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(PulseColors.Background)
+    ) {
+        val s = session
+        when {
+            s == null -> AuthFlow()
+            !s.profile.profileCompleted -> Box(Modifier.statusBarsPadding()) { ProfileScreen(setup = true, onDone = {}) }
+            else -> MainFlow()
+        }
+    }
+}
+
+@Composable
+private fun AuthFlow() {
+    val navController = rememberNavController()
+    NavHost(navController, startDestination = Routes.LOGIN, modifier = Modifier.statusBarsPadding()) {
+        composable(Routes.LOGIN) { LoginScreen(onCreateAccount = { navController.navigate(Routes.REGISTER) }) }
+        composable(Routes.REGISTER) {
+            RegisterScreen(onBackToLogin = { if (!navController.popBackStack()) navController.navigate(Routes.LOGIN) })
+        }
+    }
+}
+
+@Composable
+private fun MainFlow() {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentDestination = backStack?.destination
+    val selectedTab = PulseTab.values().firstOrNull { tab ->
+        currentDestination?.hierarchy?.any { it.route == tab.route } == true
+    }
 
     Scaffold(
         backgroundColor = PulseColors.Background,
         bottomBar = {
-            PulseBottomBar(
-                selected = PulseTab.values().firstOrNull { tab ->
-                    currentDestination?.hierarchy?.any { it.route == tab.route } == true
-                } ?: PulseTab.Today,
-                onSelect = { tab ->
-                    navController.navigate(tab.route) {
-                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
+            // Settings screens are full-screen, without the tab bar.
+            if (selectedTab != null) {
+                PulseBottomBar(
+                    selected = selectedTab,
+                    onSelect = { tab ->
+                        navController.navigate(tab.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -87,12 +134,24 @@ fun PulseCoachApp() {
                 .padding(innerPadding)
                 .statusBarsPadding()
         ) {
-            composable(PulseTab.Today.route) { TodayScreen(onOpenCoach = { navController.navigate(PulseTab.Coach.route) }) }
+            composable(PulseTab.Today.route) {
+                TodayScreen(
+                    onOpenCoach = { navController.navigate(PulseTab.Coach.route) },
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) }
+                )
+            }
             composable(PulseTab.Heart.route) { HeartScreen() }
             composable(PulseTab.Sessions.route) { SessionsScreen() }
             composable(PulseTab.Body.route) { BodyScreen() }
             composable(PulseTab.Coach.route) { CoachScreen() }
             composable(PulseTab.Goals.route) { GoalsScreen() }
+            composable(Routes.SETTINGS) {
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onEditProfile = { navController.navigate(Routes.EDIT_PROFILE) }
+                )
+            }
+            composable(Routes.EDIT_PROFILE) { ProfileScreen(setup = false, onDone = { navController.popBackStack() }) }
         }
     }
 }
