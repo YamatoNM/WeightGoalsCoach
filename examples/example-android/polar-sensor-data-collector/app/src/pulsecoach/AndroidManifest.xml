@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pulse Coach flavor: merged on top of src/main/AndroidManifest.xml. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <activity
+            android:name="com.polar.pulsecoach.PulseCoachActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/PulseCoachTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- The PSDC screens stay in the app for admins, but are not a launcher entry here. -->
+        <activity
+            android:name="com.polar.polarsensordatacollector.ui.landing.MainActivity"
+            tools:node="merge">
+            <intent-filter tools:node="removeAll" />
+        </activity>
+    </application>
+</manifest>
