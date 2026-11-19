@@ -134,6 +134,10 @@ android {
         pulsecoach {
             dimension "app"
             applicationIdSuffix ".pulsecoach"
+            // Comma-separated emails that get the admin role (raw-data access to the PSDC screens).
+            // Keep real addresses out of the repo: set it in ~/.gradle/gradle.properties or with
+            // -PpulseAdminEmails=a@example.com,b@example.com
+            buildConfigField "String", "PULSE_ADMIN_EMAILS", "\"${project.findProperty('pulseAdminEmails') ?: ''}\""
         }
     }
 
