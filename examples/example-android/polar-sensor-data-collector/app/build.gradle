@@ -122,6 +122,21 @@ android {
         buildConfig = true
     }
 
+    // Two apps from one codebase, sharing the single PolarBleApi instance (PolarBleSdkModule):
+    //  - psdc:       the existing Polar Sensor Data Collector
+    //  - pulsecoach: the Pulse Coach consumer app (sources in src/pulsecoach). Admin users can
+    //                open the existing PSDC screens from inside it to see raw values.
+    flavorDimensions = ["app"]
+    productFlavors {
+        psdc {
+            dimension "app"
+        }
+        pulsecoach {
+            dimension "app"
+            applicationIdSuffix ".pulsecoach"
+        }
+    }
+
     signingConfigs {
         if (System.getenv("PSDC_ANDROID_KEYSTORE_PATH")) {
             release {
@@ -300,6 +315,15 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 apply plugin: 'com.google.gms.google-services'
+
+// google-services.json is registered only for the PSDC package. Pulse Coach has no Firebase
+// project yet, so skip the Google Services / Crashlytics processing for that flavor.
+tasks.configureEach { task ->
+    if (task.name.contains("Pulsecoach") &&
+            (task.name.contains("GoogleServices") || task.name.contains("Crashlytics"))) {
+        task.enabled = false
+    }
+}
 
 gradle.taskGraph.whenReady { taskGraph ->
     def releaseTaskRequested = taskGraph.allTasks.any { task ->
