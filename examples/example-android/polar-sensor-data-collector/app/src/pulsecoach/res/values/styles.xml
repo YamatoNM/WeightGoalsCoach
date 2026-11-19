@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="PulseCoachTheme" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:windowBackground">@color/pulse_bg</item>
+        <item name="android:statusBarColor">@color/pulse_bg</item>
+        <item name="android:navigationBarColor">@color/pulse_nav</item>
+    </style>
+
+    <color name="pulse_bg">#0E0F0C</color>
+    <color name="pulse_nav">#141511</color>
+</resources>
