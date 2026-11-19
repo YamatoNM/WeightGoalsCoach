@@ -133,7 +133,7 @@ object ZipCompressionHelper {
 
         return FileProvider.getUriForFile(
             context,
-            "com.polar.polarsensordatacollector.fileprovider",
+            "${context.packageName}.fileprovider",
             zipFile
         )
     }

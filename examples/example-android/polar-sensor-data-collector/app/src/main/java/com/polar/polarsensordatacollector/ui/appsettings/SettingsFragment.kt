@@ -139,7 +139,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (logsFile.exists()) {
             val uri = FileProvider.getUriForFile(
                     context,
-                    "com.polar.polarsensordatacollector.fileprovider",
+                    "${context.packageName}.fileprovider",
                     logsFile
             )
             val intent = Intent(Intent.ACTION_SEND).apply {
